@@ -8,6 +8,7 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS
 import Control.Monad.IO.Class
 import Data.Word
+import Data.Int
 import GHC.Float
 import Foreign.C.Types
 
@@ -28,9 +29,16 @@ data AppState = AppState
 
 type App = RWST AppEnv () AppState IO ()
 
+toCInt :: Int -> CInt
+toCInt int = let cint = (fromIntegral int) :: Int32 in CInt cint
+
+sizeCallback :: Window -> Int -> Int -> IO ()
+sizeCallback window x y = do
+  viewport $= (Position 0 0, Size (toCInt x) (toCInt y))
+
 setup :: Window -> IO ()
 setup win = do
-  viewport $= (Position 0 0, Size 1440 880)
+  setWindowSizeCallback win (Just sizeCallback)
 
   let vertexPositions = [
         0.75, 0.75, 0.0, 1.0,
