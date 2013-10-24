@@ -5,9 +5,11 @@ import Data.ByteString as B (readFile, ByteString)
 import System.FilePath
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Trans.RWS
 import Control.Monad.IO.Class
 import Data.Word
+import GHC.Float
+import Foreign.C.Types
 
 import Shaders
 import Buffers
@@ -20,7 +22,11 @@ data AppEnv = AppEnv
   , envObject :: !Object
   }
 
-type App = ReaderT AppEnv IO ()
+data AppState = AppState
+  { statePosition :: Vertex2 GLfloat
+  }
+
+type App = RWST AppEnv () AppState IO ()
 
 setup :: Window -> IO ()
 setup win = do
@@ -31,12 +37,12 @@ setup win = do
         0.75, -0.75, 0.0, 1.0,
         -0.75, 0.75, 0.0, 1.0,
         -0.75, -0.75, 0.0, 1.0
-        ] :: [Float]
+        ]
 
   let indices = [
         0, 1, 2,
         2, 1, 3
-        ] :: [Word16]
+        ]
 
   Just object <- runMaybeT $ makeObject [
             (VertexShader, "tut1.vert.shader"),
@@ -45,12 +51,17 @@ setup win = do
            [("position", VertexArrayDescriptor 4 Float 0 $ ptrOffset 0)]
            Triangles 6
 
-  let env = AppEnv {
-        envWindow = win
+  let env = AppEnv
+        { envWindow = win
         , envObject = object
         }
 
-  runReaderT run env
+  let state = AppState
+        { statePosition = Vertex2 0.0 0.0
+        }
+
+  runRWST run env state
+  return ()
 
 draw :: App
 draw = do
@@ -58,12 +69,28 @@ draw = do
   liftIO $ clear [ColorBuffer]
 
   object <- asks envObject
+  position <- gets statePosition
 
-  liftIO $ render object
+  liftIO $ renderWith object $ \program -> do
+    offsetLoc <- GL.get $ uniformLocation program "offset"
+    uniform offsetLoc $= position
+
+getPositionForTime :: Double -> Vertex2 GLfloat
+getPositionForTime time = Vertex2 (CFloat $ double2Float $ sin time) 0.0
+
+update :: App
+update = do
+  Just time <- liftIO $ getTime
+
+  modify $ \s -> s
+    { statePosition = getPositionForTime time
+    }
 
 run :: App
 run = do
   win <- asks envWindow
+
+  update
 
   draw
   liftIO $ GLFW.swapBuffers win

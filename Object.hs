@@ -49,9 +49,13 @@ makeObject programSpec vertices indices attribs mode num = do
   return $ Object program [vertexBuffer, indexBuffer] num mode vao
 
 instance Renderable Object where
-  render (Object program _ size mode vao) = do
+  render object = renderWith object (\_ -> return ())
+
+  renderWith (Object program _ size mode vao) m = do
     bindVertexArrayObject $= Just vao
     currentProgram $= Just program
+
+    m program
 
     drawElements mode size UnsignedShort (ptrOffset 0)
 
