@@ -11,23 +11,15 @@ import Data.Word
 import Data.Int
 import GHC.Float
 import Foreign.C.Types
+import Control.Concurrent.STM
 
+import App
+import Events
 import Shaders
 import Buffers
 import ArrayObjects
 import Object
 import Renderable
-
-data AppEnv = AppEnv
-  { envWindow :: !GLFW.Window
-  , envObject :: !Object
-  }
-
-data AppState = AppState
-  { statePosition :: Vertex2 GLfloat
-  }
-
-type App = RWST AppEnv () AppState IO ()
 
 toCInt :: Int -> CInt
 toCInt int = let cint = (fromIntegral int) :: Int32 in CInt cint
@@ -39,6 +31,10 @@ sizeCallback window x y = do
 setup :: Window -> IO ()
 setup win = do
   setWindowSizeCallback win (Just sizeCallback)
+
+  queue <- newTQueueIO
+
+  setupEvents win queue
 
   let vertexPositions = [
         0.75, 0.75, 0.0, 1.0,
@@ -62,6 +58,7 @@ setup win = do
   let env = AppEnv
         { envWindow = win
         , envObject = object
+        , envQueue = queue
         }
 
   let state = AppState
@@ -94,9 +91,22 @@ update = do
     { statePosition = getPositionForTime time
     }
 
+handleEvents :: App
+handleEvents = do
+  queue <- asks envQueue
+  e <- liftIO $ atomically $ tryReadTQueue queue
+  case e of
+    Just (EventKeyPress key modifiers) -> do
+      handleEvents
+    Just (EventKeyRelease key modifiers) -> do
+      handleEvents
+    Nothing -> return ()
+
 run :: App
 run = do
   win <- asks envWindow
+
+  handleEvents
 
   update
 
