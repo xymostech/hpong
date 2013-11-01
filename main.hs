@@ -20,6 +20,7 @@ import Buffers
 import ArrayObjects
 import Object
 import Renderable
+import Sounds
 
 toCInt :: Int -> CInt
 toCInt int = let cint = (fromIntegral int) :: Int32 in CInt cint
@@ -30,6 +31,7 @@ sizeCallback window x y = do
 
 setup :: Window -> IO ()
 setup win = do
+  setupSound
   setWindowSizeCallback win (Just sizeCallback)
 
   queue <- newTQueueIO
@@ -66,6 +68,8 @@ setup win = do
         }
 
   runRWST run env state
+
+  cleanupSound
   return ()
 
 draw :: App
