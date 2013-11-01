@@ -63,7 +63,7 @@ setup win = do
 
   let env = AppEnv
         { envWindow = win
-        , envObject = paddle
+        , envPaddle = paddle
         , envQueue = queue
         }
 
@@ -81,12 +81,16 @@ draw = do
   liftIO $ clearColor $= Color4 0.1 0.1 0.1 0.0
   liftIO $ clear [ColorBuffer]
 
-  object <- asks envObject
+  paddle <- asks envPaddle
   position <- gets statePosition
 
-  liftIO $ renderWith object $ \program -> do
+  liftIO $ renderWith paddle $ \program -> do
     offsetLoc <- GL.get $ uniformLocation program "offset"
     uniform offsetLoc $= position
+
+  liftIO $ renderWith paddle $ \program -> do
+    offsetLoc <- GL.get $ uniformLocation program "offset"
+    uniform offsetLoc $= (Vertex2 0.0 0.0 :: Vertex2 GLfloat)
 
 getPositionForTime :: Double -> Vertex2 GLfloat
 getPositionForTime time = Vertex2 (CFloat $ double2Float $ sin time) 0.0

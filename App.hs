@@ -10,7 +10,7 @@ import Object
 
 data AppEnv = AppEnv
   { envWindow :: !GLFW.Window
-  , envObject :: !Object
+  , envPaddle :: !Object
   , envQueue :: TQueue Event
   }
 
