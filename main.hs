@@ -29,6 +29,27 @@ sizeCallback :: Window -> Int -> Int -> IO ()
 sizeCallback window x y = do
   viewport $= (Position 0 0, Size (toCInt x) (toCInt y))
 
+makePaddle :: IO Object
+makePaddle = do
+  Just object <- runMaybeT $ makeObject [
+     (VertexShader, "tut1.vert.shader"),
+     (FragmentShader, "tut1.frag.shader")
+    ] vertexPositions indices
+    [("position", VertexArrayDescriptor 4 Float 0 $ ptrOffset 0)]
+    Triangles 6
+  return object
+  where
+    vertexPositions = [
+       0.2, 0.2, 0.0, 1.0,
+       0.2, -0.2, 0.0, 1.0,
+       -0.2, 0.2, 0.0, 1.0,
+       -0.2, -0.2, 0.0, 1.0
+      ]
+    indices = [
+       0, 1, 2,
+       2, 1, 3
+      ]
+
 setup :: Window -> IO ()
 setup win = do
   setupSound
@@ -38,28 +59,11 @@ setup win = do
 
   setupEvents win queue
 
-  let vertexPositions = [
-        0.75, 0.75, 0.0, 1.0,
-        0.75, -0.75, 0.0, 1.0,
-        -0.75, 0.75, 0.0, 1.0,
-        -0.75, -0.75, 0.0, 1.0
-        ]
-
-  let indices = [
-        0, 1, 2,
-        2, 1, 3
-        ]
-
-  Just object <- runMaybeT $ makeObject [
-            (VertexShader, "tut1.vert.shader"),
-            (FragmentShader, "tut1.frag.shader")
-           ] vertexPositions indices
-           [("position", VertexArrayDescriptor 4 Float 0 $ ptrOffset 0)]
-           Triangles 6
+  paddle <- makePaddle
 
   let env = AppEnv
         { envWindow = win
-        , envObject = object
+        , envObject = paddle
         , envQueue = queue
         }
 
