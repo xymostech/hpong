@@ -184,7 +184,7 @@ main :: IO ()
 main = do
   r <- GLFW.init
   when r $ do
-    withWindow 1440 880 "Haskell GL" setup
+    withWindow 800 600 "hpong" setup
     GLFW.terminate
 
 withWindow :: Int -> Int -> String -> (Window -> IO ()) -> IO ()
