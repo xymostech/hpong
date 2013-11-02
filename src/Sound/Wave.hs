@@ -1,4 +1,4 @@
-module Wave where
+module Sound.Wave where
 
 import qualified Data.ByteString as B
 import System.IO

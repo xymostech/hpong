@@ -1,4 +1,4 @@
-module Buffers
+module Graphics.Buffers
 ( makeBufferWithData
 , ptrOffset
 )

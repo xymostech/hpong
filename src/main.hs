@@ -17,12 +17,12 @@ import Paths_hpong
 
 import App
 import Events
-import Shaders
-import Buffers
-import ArrayObjects
-import Object
-import Renderable
-import Sounds
+import Graphics.Shaders
+import Graphics.Buffers
+import Graphics.ArrayObjects
+import Graphics.Object
+import Graphics.Renderable
+import Sound.Sounds
 import Objects.Paddle
 import Objects.Ball
 

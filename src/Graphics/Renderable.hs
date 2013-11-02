@@ -1,4 +1,4 @@
-module Renderable where
+module Graphics.Renderable where
 
 import Graphics.Rendering.OpenGL
 

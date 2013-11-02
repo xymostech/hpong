@@ -6,7 +6,7 @@ import Control.Concurrent.STM
 import Control.Monad.Trans.RWS
 
 import Events
-import Object
+import Graphics.Object
 import Objects.Paddle
 import Objects.Ball
 

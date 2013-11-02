@@ -1,4 +1,4 @@
-module Sounds where
+module Sound.Sounds where
 
 import Sound.OpenAL
 import Control.Concurrent
@@ -9,7 +9,7 @@ import Control.Monad
 import Control.Monad.Trans.Maybe
 import Control.Concurrent.MVar
 
-import Wave
+import Sound.Wave
 
 setupSound :: IO ()
 setupSound = do

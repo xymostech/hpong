@@ -1,4 +1,4 @@
-module Object
+module Graphics.Object
 ( makeObject
 , Object
 )
@@ -10,10 +10,10 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Data.Word
 
-import Renderable
-import Shaders
-import Buffers
-import ArrayObjects
+import Graphics.Renderable
+import Graphics.Shaders
+import Graphics.Buffers
+import Graphics.ArrayObjects
 
 data Object = Object Program [BufferObject] NumArrayIndices
               PrimitiveMode VertexArrayObject

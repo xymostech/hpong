@@ -1,4 +1,4 @@
-module Shaders
+module Graphics.Shaders
 ( loadShader
 , makeProgram
 ) where

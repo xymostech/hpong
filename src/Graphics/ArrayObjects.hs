@@ -1,4 +1,4 @@
-module ArrayObjects where
+module Graphics.ArrayObjects where
 
 import Graphics.Rendering.OpenGL as GL
 
