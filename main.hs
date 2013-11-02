@@ -1,6 +1,6 @@
 import Graphics.Rendering.OpenGL as GL
 import Graphics.UI.GLFW as GLFW
-import Control.Monad (when, unless, guard)
+import Control.Monad (when, unless, guard, void)
 import Data.ByteString as B (readFile, ByteString)
 import System.FilePath
 import Control.Monad.Trans.Maybe
@@ -23,16 +23,23 @@ import Object
 import Renderable
 import Sounds
 import Paddle
+import Ball
 
 toCInt :: Int -> CInt
 toCInt int = let cint = (fromIntegral int) :: Int32 in CInt cint
 
 sizeCallback :: Window -> Int -> Int -> IO ()
-sizeCallback window x y = do
-  viewport $= (Position 0 0, Size (toCInt x) (toCInt y))
+sizeCallback window x y
+  | x > y =
+    viewport $= (Position (toCInt ((x - y) `div` 2)) 0,
+                 Size (toCInt y) (toCInt y))
+  | y >= x =
+    viewport $= (Position 0 (toCInt ((y - x) `div` 2)),
+                 Size (toCInt x) (toCInt x))
 
-makePaddleObject :: IO Object
-makePaddleObject = do
+
+makeRectangleObject :: Float -> Float -> IO Object
+makeRectangleObject width height = do
   Just object <- runMaybeT $ makeObject [
      (VertexShader, "tut1.vert.shader"),
      (FragmentShader, "tut1.frag.shader")
@@ -42,10 +49,10 @@ makePaddleObject = do
   return object
   where
     vertexPositions = [
-       0.03, 0.2, 0.0, 1.0,
-       0.03, -0.2, 0.0, 1.0,
-       -0.03, 0.2, 0.0, 1.0,
-       -0.03, -0.2, 0.0, 1.0
+       width, height, 0.0, 1.0,
+       width, -height, 0.0, 1.0,
+       -width, height, 0.0, 1.0,
+       -width, -height, 0.0, 1.0
       ]
     indices = [
        0, 1, 2,
@@ -61,17 +68,22 @@ setup win = do
 
   setupEvents win queue
 
-  paddle <- makePaddleObject
+  paddle <- makeRectangleObject 0.03 0.2
+  ballObject <- makeRectangleObject 0.05 0.05
+
+  ball <- makeBall
 
   let env = AppEnv
         { envWindow = win
         , envPaddle = paddle
+        , envBall = ballObject
         , envQueue = queue
         }
 
   let state = AppState
-        { stateLeftPaddle = makePaddle $ Vertex2 (-0.85) 0.0
-        , stateRightPaddle = makePaddle $ Vertex2 0.85 0.0
+        { stateLeftPaddle = makePaddle $ Vertex2 (-0.9) 0.0
+        , stateRightPaddle = makePaddle $ Vertex2 0.9 0.0
+        , stateBall = ball
         }
 
   runRWST run env state
@@ -97,10 +109,24 @@ draw = do
     offsetLoc <- GL.get $ uniformLocation program "offset"
     uniform offsetLoc $= rightPosition
 
+  ball <- asks envBall
+  ballPos <- ballPosition <$> gets stateBall
+
+  liftIO $ renderWith ball $ \program -> do
+    offsetLoc <- GL.get $ uniformLocation program "offset"
+    uniform offsetLoc $= ballPos
+
 update :: App
-update = modify $ \s -> s
-    { stateLeftPaddle = paddleUpdate (stateLeftPaddle s)
-    , stateRightPaddle = paddleUpdate (stateRightPaddle s)
+update = do
+  leftPaddle <- gets stateLeftPaddle
+  rightPaddle <- gets stateRightPaddle
+  ball <- gets stateBall
+  let (newBall, hit) = ballUpdate ball leftPaddle rightPaddle
+  when hit $ liftIO $ void $ playFile "bonk.wav"
+  modify $ \s -> s
+    { stateLeftPaddle = paddleUpdate leftPaddle
+    , stateRightPaddle = paddleUpdate rightPaddle
+    , stateBall = newBall
     }
 
 handleEvents :: App

@@ -8,16 +8,19 @@ import Control.Monad.Trans.RWS
 import Events
 import Object
 import Paddle
+import Ball
 
 data AppEnv = AppEnv
   { envWindow :: !GLFW.Window
   , envPaddle :: !Object
+  , envBall :: !Object
   , envQueue :: TQueue Event
   }
 
 data AppState = AppState
   { stateLeftPaddle :: Paddle
   , stateRightPaddle :: Paddle
+  , stateBall :: Ball
   }
 
 
