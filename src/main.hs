@@ -13,6 +13,7 @@ import GHC.Float
 import Foreign.C.Types
 import Control.Concurrent.STM
 import Data.Functor
+import Paths_hpong
 
 import App
 import Events
@@ -40,9 +41,11 @@ sizeCallback window x y
 
 makeRectangleObject :: Float -> Float -> IO Object
 makeRectangleObject width height = do
+  vertShaderPath <- getDataFileName ("shaders" </> "tut1.vert.shader")
+  fragShaderPath <- getDataFileName ("shaders" </> "tut1.frag.shader")
   Just object <- runMaybeT $ makeObject [
-     (VertexShader, "tut1.vert.shader"),
-     (FragmentShader, "tut1.frag.shader")
+     (VertexShader, vertShaderPath),
+     (FragmentShader, fragShaderPath)
     ] vertexPositions indices
     [("position", VertexArrayDescriptor 4 Float 0 $ ptrOffset 0)]
     Triangles 6
@@ -122,7 +125,9 @@ update = do
   rightPaddle <- gets stateRightPaddle
   ball <- gets stateBall
   let (newBall, hit) = ballUpdate ball leftPaddle rightPaddle
-  when hit $ liftIO $ void $ playFile "bonk.wav"
+  when hit $ do
+    soundPath <- liftIO $ getDataFileName ("sounds" </> "bonk.wav")
+    liftIO $ void $ playFile soundPath
   modify $ \s -> s
     { stateLeftPaddle = paddleUpdate leftPaddle
     , stateRightPaddle = paddleUpdate rightPaddle
