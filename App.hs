@@ -7,6 +7,7 @@ import Control.Monad.Trans.RWS
 
 import Events
 import Object
+import Paddle
 
 data AppEnv = AppEnv
   { envWindow :: !GLFW.Window
@@ -15,7 +16,9 @@ data AppEnv = AppEnv
   }
 
 data AppState = AppState
-  { statePosition :: Vertex2 GLfloat
+  { stateLeftPaddle :: Paddle
+  , stateRightPaddle :: Paddle
   }
+
 
 type App = RWST AppEnv () AppState IO ()

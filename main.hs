@@ -12,6 +12,7 @@ import Data.Int
 import GHC.Float
 import Foreign.C.Types
 import Control.Concurrent.STM
+import Data.Functor
 
 import App
 import Events
@@ -21,6 +22,7 @@ import ArrayObjects
 import Object
 import Renderable
 import Sounds
+import Paddle
 
 toCInt :: Int -> CInt
 toCInt int = let cint = (fromIntegral int) :: Int32 in CInt cint
@@ -29,8 +31,8 @@ sizeCallback :: Window -> Int -> Int -> IO ()
 sizeCallback window x y = do
   viewport $= (Position 0 0, Size (toCInt x) (toCInt y))
 
-makePaddle :: IO Object
-makePaddle = do
+makePaddleObject :: IO Object
+makePaddleObject = do
   Just object <- runMaybeT $ makeObject [
      (VertexShader, "tut1.vert.shader"),
      (FragmentShader, "tut1.frag.shader")
@@ -40,10 +42,10 @@ makePaddle = do
   return object
   where
     vertexPositions = [
-       0.2, 0.2, 0.0, 1.0,
-       0.2, -0.2, 0.0, 1.0,
-       -0.2, 0.2, 0.0, 1.0,
-       -0.2, -0.2, 0.0, 1.0
+       0.03, 0.2, 0.0, 1.0,
+       0.03, -0.2, 0.0, 1.0,
+       -0.03, 0.2, 0.0, 1.0,
+       -0.03, -0.2, 0.0, 1.0
       ]
     indices = [
        0, 1, 2,
@@ -59,7 +61,7 @@ setup win = do
 
   setupEvents win queue
 
-  paddle <- makePaddle
+  paddle <- makePaddleObject
 
   let env = AppEnv
         { envWindow = win
@@ -68,7 +70,8 @@ setup win = do
         }
 
   let state = AppState
-        { statePosition = Vertex2 0.0 0.0
+        { stateLeftPaddle = makePaddle $ Vertex2 (-0.85) 0.0
+        , stateRightPaddle = makePaddle $ Vertex2 0.85 0.0
         }
 
   runRWST run env state
@@ -82,25 +85,22 @@ draw = do
   liftIO $ clear [ColorBuffer]
 
   paddle <- asks envPaddle
-  position <- gets statePosition
+  leftPosition <- paddlePosition <$> gets stateLeftPaddle
 
   liftIO $ renderWith paddle $ \program -> do
     offsetLoc <- GL.get $ uniformLocation program "offset"
-    uniform offsetLoc $= position
+    uniform offsetLoc $= leftPosition
+
+  rightPosition <- paddlePosition <$> gets stateRightPaddle
 
   liftIO $ renderWith paddle $ \program -> do
     offsetLoc <- GL.get $ uniformLocation program "offset"
-    uniform offsetLoc $= (Vertex2 0.0 0.0 :: Vertex2 GLfloat)
-
-getPositionForTime :: Double -> Vertex2 GLfloat
-getPositionForTime time = Vertex2 (CFloat $ double2Float $ sin time) 0.0
+    uniform offsetLoc $= rightPosition
 
 update :: App
-update = do
-  Just time <- liftIO $ getTime
-
-  modify $ \s -> s
-    { statePosition = getPositionForTime time
+update = modify $ \s -> s
+    { stateLeftPaddle = paddleUpdate (stateLeftPaddle s)
+    , stateRightPaddle = paddleUpdate (stateRightPaddle s)
     }
 
 handleEvents :: App
@@ -109,8 +109,28 @@ handleEvents = do
   e <- liftIO $ atomically $ tryReadTQueue queue
   case e of
     Just (EventKeyPress key modifiers) -> do
+      case key of
+        Key'Up -> modify $ \s -> s {
+          stateRightPaddle = paddlePressed (stateRightPaddle s) Up Pressed }
+        Key'Down -> modify $ \s -> s {
+          stateRightPaddle = paddlePressed (stateRightPaddle s) Down Pressed }
+        Key'W -> modify $ \s -> s {
+          stateLeftPaddle = paddlePressed (stateLeftPaddle s) Up Pressed }
+        Key'S -> modify $ \s -> s {
+          stateLeftPaddle = paddlePressed (stateLeftPaddle s) Down Pressed }
+        _ -> return ()
       handleEvents
     Just (EventKeyRelease key modifiers) -> do
+      case key of
+        Key'Up -> modify $ \s -> s {
+          stateRightPaddle = paddlePressed (stateRightPaddle s) Up Released }
+        Key'Down -> modify $ \s -> s {
+          stateRightPaddle = paddlePressed (stateRightPaddle s) Down Released }
+        Key'W -> modify $ \s -> s {
+          stateLeftPaddle = paddlePressed (stateLeftPaddle s) Up Released }
+        Key'S -> modify $ \s -> s {
+          stateLeftPaddle = paddlePressed (stateLeftPaddle s) Down Released }
+        _ -> return ()
       handleEvents
     Nothing -> return ()
 
