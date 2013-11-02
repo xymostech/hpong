@@ -41,8 +41,8 @@ sizeCallback window x y
 
 makeRectangleObject :: Float -> Float -> IO Object
 makeRectangleObject width height = do
-  vertShaderPath <- getDataFileName ("shaders" </> "tut1.vert.shader")
-  fragShaderPath <- getDataFileName ("shaders" </> "tut1.frag.shader")
+  vertShaderPath <- getDataFileName ("shaders" </> "default.vert.shader")
+  fragShaderPath <- getDataFileName ("shaders" </> "default.frag.shader")
   Just object <- runMaybeT $ makeObject [
      (VertexShader, vertShaderPath),
      (FragmentShader, fragShaderPath)
