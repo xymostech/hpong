@@ -1,4 +1,4 @@
-module Ball
+module Objects.Ball
 (Ball, makeBall, ballUpdate, ballPosition)
 where
 
@@ -6,7 +6,7 @@ import Graphics.Rendering.OpenGL (GLfloat, Vertex2(Vertex2))
 import System.Random
 import Prelude hiding (Left, Right)
 
-import Paddle hiding (Up, Down)
+import Objects.Paddle hiding (Up, Down)
 
 data HorizDirection = Left | Right
   deriving (Show, Eq)

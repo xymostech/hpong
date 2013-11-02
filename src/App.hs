@@ -7,8 +7,8 @@ import Control.Monad.Trans.RWS
 
 import Events
 import Object
-import Paddle
-import Ball
+import Objects.Paddle
+import Objects.Ball
 
 data AppEnv = AppEnv
   { envWindow :: !GLFW.Window

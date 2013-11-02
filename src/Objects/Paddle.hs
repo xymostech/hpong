@@ -1,4 +1,4 @@
-module Paddle
+module Objects.Paddle
 ( makePaddle, paddlePosition, paddlePressed, paddleUpdate
 , Paddle, Direction(Up, Down), EventType(Pressed, Released)
 )
